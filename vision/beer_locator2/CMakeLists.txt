@@ -146,6 +146,13 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/beer_locator2_node.cpp)
+# add_executable(beer_locator src/beer_locator.cpp)
+# target_link_libraries(beer_locator
+#   ${catkin_LIBRARIES}
+#   ${OpenCV_LIBRARIES}
+#   # ${PCL_LIBRARIES}
+#   ${kinect2_bridge_LIBRARIES}
+# )
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
