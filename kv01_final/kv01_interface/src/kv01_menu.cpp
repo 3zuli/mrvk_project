@@ -156,9 +156,11 @@ int main(int argc, char **argv)
   bool help;
   double speed;
   std::string joint_string;
+  ros::Rate menu_loop_rate(20);
 
   while(ros::ok())
   {
+    menu_loop_rate.sleep();
     help=true;
     cout << "||PRIKAZ||:" << flush;
     cin >> prikaz;
@@ -366,9 +368,9 @@ int main(int argc, char **argv)
 	cout << "||1: Otvorit Gripper ||" << endl;
 	cout << "||2: Zatvorit Gripper||" << endl;
 	cout << "||3: Zastavit Gripper||" << endl;
-	cout << "||Zadajte cislo klbu||:" << flush;
+	cout << "||Command||:" << flush;
 	cin >> grip_comm;
-	
+
 	 if (grip_comm <1 || grip_comm > 3)
 	 {
 	   ROS_ERROR("Chybne cislo prikazu");
@@ -376,8 +378,8 @@ int main(int argc, char **argv)
 	 }
 	joint_speed.joint = grip_comm;
 	joint_speed.command = comm_gripper_control;
-        menu_fun->speed_pub.publish(joint_speed);
-      }
+		menu_fun->speed_pub.publish(joint_speed);
+	  }
       break;
       case 11:
       {
