@@ -399,6 +399,8 @@ class ImageConverter
         Mat imgOriginal = cv_ptr->image;
         Mat imgHSV;
 
+        imshow("original", imgOriginal);
+
         cvtColor(imgOriginal, imgHSV, COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
 
         Mat imgThresholded;
@@ -484,7 +486,8 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "image_converter");
     ImageConverter ic;
 
-    //namedWindow(OPENCV_WINDOW,CV_WINDOW_NORMAL);
+    namedWindow(OPENCV_WINDOW,CV_WINDOW_NORMAL);
+    namedWindow("original",CV_WINDOW_NORMAL);
     //Create trackbars in "Control" window
     cvCreateTrackbar("LowH", OPENCV_WINDOW, &iLowH, 179); //Hue (0 - 179)
     cvCreateTrackbar("HighH", OPENCV_WINDOW, &iHighH, 179);
