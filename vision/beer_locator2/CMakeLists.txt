@@ -154,6 +154,15 @@ include_directories(
 #   ${kinect2_bridge_LIBRARIES}
 # )
 
+add_executable(opencv-test src/test.cpp) 
+include_directories(${OpenCV_INCLUDE_DIRS})
+target_link_libraries(opencv-test 
+	${catkin_LIBRARIES}
+	${OpenCV_LIBRARIES}
+	${kinect2_bridge_LIBRARIES}
+)
+
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -168,6 +177,10 @@ include_directories(
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
+
+# add_executable(talker src/talker.cpp)
+# target_link_libraries(talker ${catkin_LIBRARIES})
+# add_dependencies(talker beginner_tutorials_generate_messages_cpp)
 
 #############
 ## Install ##
