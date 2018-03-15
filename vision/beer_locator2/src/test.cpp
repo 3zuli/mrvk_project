@@ -295,7 +295,7 @@ int main(int argc, char **argv)
 using namespace std;
 using namespace cv;
 
-static const std::string OPENCV_WINDOW = "Image window";
+static const char OPENCV_WINDOW[] = "Image window";
 int canny_threshold = 200;
 int hough_threshold = 100; // for 640x480, 80 for 320x240
 
@@ -348,7 +348,7 @@ class ImageConverter
         // Subscribe to input video feed and publish output video feed
         image_sub_ = it_.subscribe("/kinect2/qhd/image_color_rect", 1, &ImageConverter::imageCb, this);
         //image_pub_ = it_.advertise("/image_converter/output_video", 1);
-        namedWindow(OPENCV_WINDOW);
+        namedWindow(OPENCV_WINDOW,CV_WINDOW_NORMAL);
     }
 
     ~ImageConverter()
@@ -431,7 +431,10 @@ class ImageConverter
         drawContours( imgThresholded, contours, i, color, 1, 8, hierarchy, 0, Point() );
 
         float ctArea= contourArea(contours[i]);
-        if(ctArea > biggestContourArea)
+        RotatedRect bbox = minAreaRect(contours[i]);
+        float pomerStran = bbox.size.width/bbox.size.height;
+
+        if(ctArea > biggestContourArea && (pomerStran > 0.45 && pomerStran < 0.6))
         {
             biggestContourArea = ctArea;
             biggestContourIdx = i;
@@ -462,11 +465,8 @@ class ImageConverter
 
     cout << "Pomer stran: " <<boundingBox.size.width/boundingBox.size.height << ", sirka " <<boundingBox.size.width << ", vyska: " << boundingBox.size.height << endl;
     // display
-    imshow("Control", imgThresholded); //show the thresholded image
+    imshow(OPENCV_WINDOW, imgThresholded); //show the thresholded image
     // imshow("Control", drawing);
-
-
-
         //imshow("Control", imgOriginal);
         //imshow("Original", imgOriginal); //show the original image
 
@@ -484,16 +484,16 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "image_converter");
     ImageConverter ic;
 
-    namedWindow("Control",CV_WINDOW_NORMAL);
+    //namedWindow(OPENCV_WINDOW,CV_WINDOW_NORMAL);
     //Create trackbars in "Control" window
-    cvCreateTrackbar("LowH", "Control", &iLowH, 179); //Hue (0 - 179)
-    cvCreateTrackbar("HighH", "Control", &iHighH, 179);
+    cvCreateTrackbar("LowH", OPENCV_WINDOW, &iLowH, 179); //Hue (0 - 179)
+    cvCreateTrackbar("HighH", OPENCV_WINDOW, &iHighH, 179);
 
-    cvCreateTrackbar("LowS", "Control", &iLowS, 255); //Saturation (0 - 255)
-    cvCreateTrackbar("HighS", "Control", &iHighS, 255);
+    cvCreateTrackbar("LowS", OPENCV_WINDOW, &iLowS, 255); //Saturation (0 - 255)
+    cvCreateTrackbar("HighS", OPENCV_WINDOW, &iHighS, 255);
 
-    cvCreateTrackbar("LowV", "Control", &iLowV, 255);//Value (0 - 255)
-    cvCreateTrackbar("HighV", "Control", &iHighV, 255);
+    cvCreateTrackbar("LowV", OPENCV_WINDOW, &iLowV, 255);//Value (0 - 255)
+    cvCreateTrackbar("HighV", OPENCV_WINDOW, &iHighV, 255);
 
 
     ros::spin();
