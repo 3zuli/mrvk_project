@@ -34,6 +34,7 @@ Kv01_joy::Kv01_joy()
 {  
   flag_stlacene = false;
   flag_button =false;
+  n = ros::NodeHandle("~");
   
   n.param("topic", topic, topic);
   

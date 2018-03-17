@@ -612,7 +612,7 @@ bool wifi_restart(std_srvs::Empty::Request &req, std_srvs::Empty::Request &res) 
 int main(int argc, char **argv) {
 
     ros::init(argc, argv, "kv01_driver_servis");
-    ros::NodeHandle n;
+    ros::NodeHandle n("~");
 
     std::string port = "/dev/ttyUSB0";
     int baud = 115200;
