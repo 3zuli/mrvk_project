@@ -4,7 +4,8 @@
     <!-- <node name="communication_servis" pkg="kv01_driver" type="communication_servis" />
     <node name="kv01_state_publisher" pkg="kv01_driver" type="kv01_state_publisher" />-->
     <node name="kv01_driver_servis" pkg="kv01_driver" type="kv01_driver_servis" output="screen">
-        <param name="port" value="/dev/ttyUSB0"/>
+        <!--<param name="port" value="/dev/ttyUSB0"/>-->
+        <param name="port" value="/dev/ARM"/>
         <param name="baudrate" value="115200"/>
     </node>
 </launch>
