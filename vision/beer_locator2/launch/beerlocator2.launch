@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+
+<launch>
+    <node name="beer_locator2_node" pkg="beer_locator2" type="opencv-test" output="screen">
+        <param name="lowH"  type="int" value="19"/>
+        <param name="highH" type="int" value="36"/>
+        <param name="lowS"  type="int" value="65"/>
+        <param name="highS" type="int" value="255"/>
+        <param name="lowV"  type="int" value="50"/>
+        <param name="highV" type="int" value="255"/>
+
+        <param name="aspect_ratio_low" type="double" value="0.35"/>
+        <param name="aspect_ratio_high" type="double" value="0.55"/>
+        <param name="angle_range" type="double" value="30"/>
+    </node>
+</launch>

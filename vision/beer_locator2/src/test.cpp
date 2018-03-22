@@ -303,11 +303,15 @@ int hough_threshold = 100; // for 640x480, 80 for 320x240
         int iLowH = 19;
         int iHighH = 36;
 
-        int iLowS = 12;
+        int iLowS = 65;
         int iHighS = 255;
 
-        int iLowV = 28;
+        int iLowV = 50;
         int iHighV = 255;
+
+double aspectRatioLow = 0.35;
+double aspectRatioHigh = 0.55;
+double angleRange = 30.0;
 
 void hough_transform (Mat &src, Mat &dest)
 {
@@ -338,22 +342,36 @@ void hough_transform (Mat &src, Mat &dest)
 class ImageConverter
 {
     ros::NodeHandle nh_;
+    ros::NodeHandle nhPriv;
 
     image_transport::ImageTransport it_;
     
     ros::Subscriber cameraInfoSub_;
     image_transport::Subscriber image_sub_;
+    image_transport::Subscriber depth_sub_;
     image_transport::Publisher image_pub_;
 
-    Point2f rectCoords;
+    RotatedRect canBoundingBox;
 
     public:
     ImageConverter(): it_(nh_)
     {
+        nhPriv = ros::NodeHandle("~");
+
         // Subscribe to input video feed and publish output video feed
         image_sub_ = it_.subscribe("/kinect2/qhd/image_color_rect", 1, &ImageConverter::imageCb, this);
-        cameraInfoSub_ = nh_.subscribe("/kinect2/qhd/camera_info", 1, &ImageConverter::cameraInfo, this);
+        depth_sub_ = it_.subscribe("/kinect2/sd/image_depth", 1, &ImageConverter::depthImageCb, this);
         //image_pub_ = it_.advertise("/image_converter/output_video", 1);
+        nhPriv.getParam("lowH", iLowH); nhPriv.getParam("highH", iHighH);
+        nhPriv.getParam("lowS", iLowS); nhPriv.getParam("highS", iHighS);
+        nhPriv.getParam("lowV", iLowV); nhPriv.getParam("highV", iHighV);
+
+        nhPriv.getParam("aspect_ratio_low", aspectRatioLow);
+        nhPriv.getParam("aspect_ratio_high", aspectRatioHigh);
+        nhPriv.getParam("angle_range", angleRange);
+
+        cout << "lowH=" << iLowH << " highH=" << iHighH << endl;
+
         namedWindow(OPENCV_WINDOW,CV_WINDOW_NORMAL);
     }
 
@@ -446,7 +464,10 @@ class ImageConverter
         RotatedRect bbox = minAreaRect(contours[i]);
         float pomerStran = bbox.size.width/bbox.size.height;
 
-        if(ctArea > biggestContourArea && (pomerStran > 0.45 && pomerStran < 0.6))
+        if(ctArea > biggestContourArea
+                && (pomerStran > 0.35 && pomerStran < 0.55)
+                && (abs(bbox.angle) < 20))
+//        if(ctArea > biggestContourArea)
         {
             biggestContourArea = ctArea;
             biggestContourIdx = i;
@@ -461,13 +482,14 @@ class ImageConverter
     }
 
     // compute the rotated bounding rect of the biggest contour! (this is the part that does what you want/need)
-    RotatedRect boundingBox = minAreaRect(contours[biggestContourIdx]);
+    canBoundingBox = minAreaRect(contours[biggestContourIdx]);
     // one thing to remark: this will compute the OUTER boundary box, so maybe you have to erode/dilate if you want something between the ragged lines
+
 
 
     // draw the rotated rect
     Point2f corners[4];
-    boundingBox.points(corners);
+    canBoundingBox.points(corners);
     line(imgThresholded, corners[0], corners[1], Scalar(255,255,255));
     line(imgThresholded, corners[1], corners[2], Scalar(255,255,255));
     line(imgThresholded, corners[2], corners[3], Scalar(255,255,255));
@@ -476,11 +498,9 @@ class ImageConverter
     circle(imgThresholded,boundingBox.center,10,Scalar( 0, 0, 255 ));
     rectCoords = boundingBox.center;
 
-
-    cout << "Pomer stran: " <<boundingBox.size.width/boundingBox.size.height 
-    	<< ", sirka " <<boundingBox.size.width 
-    	<< ", vyska: " << boundingBox.size.height 
-    	<< ", uhol: "<< boundingBox.angle << endl;
+    cout << "Pomer stran: " <<canBoundingBox.size.width/canBoundingBox.size.height
+         << ", sirka: " <<canBoundingBox.size.width << ", vyska: " << canBoundingBox.size.height
+         << " rot: " << canBoundingBox.angle << endl;
     // display
     imshow(OPENCV_WINDOW, imgThresholded); //show the thresholded image
     // imshow("Control", drawing);
@@ -494,6 +514,29 @@ class ImageConverter
         // Output modified video stream
         //image_pub_.publish(cv_ptr->toImageMsg());
     }
+
+    void depthImageCb(const sensor_msgs::ImageConstPtr& msg){
+        cout << "depth " <<endl; // << msg.header.stamp.sec<< endl;
+        cv_bridge::CvImagePtr cv_ptr;
+        try
+        {
+            cv_ptr = cv_bridge::toCvCopy(msg, ""); // CV_16UC1//sensor_msgs::image_encodings::BGR8
+        }
+        catch(cv_bridge::Exception& e)
+        {
+            ROS_ERROR("cv_bridge exception: %s", e.what());
+            return;
+        }
+
+        Mat imgOriginal = cv_ptr->image;
+        Mat depthf; //(height, width, CV_8UC1);
+        imgOriginal.convertTo(depthf, CV_8UC1, 255.0/2048.0);
+
+        double canX = canBoundingBox.center.x;
+        double canY = canBoundingBox.center.y;
+
+        imshow("depth", depthf);
+    }
 };
 
 int main(int argc, char** argv)
@@ -503,6 +546,7 @@ int main(int argc, char** argv)
 
     namedWindow(OPENCV_WINDOW,CV_WINDOW_NORMAL);
     namedWindow("original",CV_WINDOW_NORMAL);
+    namedWindow("depth",CV_WINDOW_NORMAL);
     //Create trackbars in "Control" window
     cvCreateTrackbar("LowH", OPENCV_WINDOW, &iLowH, 179); //Hue (0 - 179)
     cvCreateTrackbar("HighH", OPENCV_WINDOW, &iHighH, 179);
