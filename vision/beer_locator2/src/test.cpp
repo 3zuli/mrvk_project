@@ -338,15 +338,21 @@ void hough_transform (Mat &src, Mat &dest)
 class ImageConverter
 {
     ros::NodeHandle nh_;
+
     image_transport::ImageTransport it_;
+    
+    ros::Subscriber cameraInfoSub_;
     image_transport::Subscriber image_sub_;
     image_transport::Publisher image_pub_;
+
+    Point2f rectCoords;
 
     public:
     ImageConverter(): it_(nh_)
     {
         // Subscribe to input video feed and publish output video feed
         image_sub_ = it_.subscribe("/kinect2/qhd/image_color_rect", 1, &ImageConverter::imageCb, this);
+        cameraInfoSub_ = nh_.subscribe("/kinect2/qhd/camera_info", 1, &ImageConverter::cameraInfo, this);
         //image_pub_ = it_.advertise("/image_converter/output_video", 1);
         namedWindow(OPENCV_WINDOW,CV_WINDOW_NORMAL);
     }
@@ -356,6 +362,10 @@ class ImageConverter
         destroyWindow(OPENCV_WINDOW);
     }
 
+    void cameraInfo(const sensor_msgs::CameraInfoPtr& msg)
+    {
+    		cout<< "Height: " <<msg->height << ", width: " << msg->width << endl;
+    }
     void imageCb(const sensor_msgs::ImageConstPtr& msg)
     {
         cv_bridge::CvImagePtr cv_ptr;
@@ -455,7 +465,6 @@ class ImageConverter
     // one thing to remark: this will compute the OUTER boundary box, so maybe you have to erode/dilate if you want something between the ragged lines
 
 
-
     // draw the rotated rect
     Point2f corners[4];
     boundingBox.points(corners);
@@ -464,8 +473,14 @@ class ImageConverter
     line(imgThresholded, corners[2], corners[3], Scalar(255,255,255));
     line(imgThresholded, corners[3], corners[0], Scalar(255,255,255));
 
+    circle(imgThresholded,boundingBox.center,10,Scalar( 0, 0, 255 ));
+    rectCoords = boundingBox.center;
 
-    cout << "Pomer stran: " <<boundingBox.size.width/boundingBox.size.height << ", sirka " <<boundingBox.size.width << ", vyska: " << boundingBox.size.height << endl;
+
+    cout << "Pomer stran: " <<boundingBox.size.width/boundingBox.size.height 
+    	<< ", sirka " <<boundingBox.size.width 
+    	<< ", vyska: " << boundingBox.size.height 
+    	<< ", uhol: "<< boundingBox.angle << endl;
     // display
     imshow(OPENCV_WINDOW, imgThresholded); //show the thresholded image
     // imshow("Control", drawing);
