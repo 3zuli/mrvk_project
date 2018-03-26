@@ -352,6 +352,9 @@ class ImageConverter
     image_transport::Publisher image_pub_;
 
     RotatedRect canBoundingBox;
+    Point2f canRectCoords;
+
+    double rgbCols, rgbRows, depthW, depthH;
 
     public:
     ImageConverter(): it_(nh_)
@@ -359,8 +362,10 @@ class ImageConverter
         nhPriv = ros::NodeHandle("~");
 
         // Subscribe to input video feed and publish output video feed
-        image_sub_ = it_.subscribe("/kinect2/qhd/image_color_rect", 1, &ImageConverter::imageCb, this);
-        depth_sub_ = it_.subscribe("/kinect2/sd/image_depth", 1, &ImageConverter::depthImageCb, this);
+//        image_sub_ = it_.subscribe("/kinect2/qhd/image_color_rect", 1, &ImageConverter::imageCb, this);
+        image_sub_ = it_.subscribe("/kinect2/sd/image_color_rect", 1, &ImageConverter::imageCb, this);
+        depth_sub_ = it_.subscribe("/kinect2/sd/image_depth_rect", 1, &ImageConverter::depthImageCb, this);
+
         //image_pub_ = it_.advertise("/image_converter/output_video", 1);
         nhPriv.getParam("lowH", iLowH); nhPriv.getParam("highH", iHighH);
         nhPriv.getParam("lowS", iLowS); nhPriv.getParam("highS", iHighS);
@@ -426,8 +431,7 @@ class ImageConverter
 
         Mat imgOriginal = cv_ptr->image;
         Mat imgHSV;
-
-        imshow("original", imgOriginal);
+        rgbCols = imgOriginal.cols; rgbRows = imgOriginal.rows;
 
         cvtColor(imgOriginal, imgHSV, COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
 
@@ -495,15 +499,19 @@ class ImageConverter
     line(imgThresholded, corners[2], corners[3], Scalar(255,255,255));
     line(imgThresholded, corners[3], corners[0], Scalar(255,255,255));
 
-    circle(imgThresholded,boundingBox.center,10,Scalar( 0, 0, 255 ));
-    rectCoords = boundingBox.center;
+    circle(imgThresholded,canBoundingBox.center,10,Scalar( 0, 0, 255 ));
+    canRectCoords = canBoundingBox.center;
 
-    cout << "Pomer stran: " <<canBoundingBox.size.width/canBoundingBox.size.height
-         << ", sirka: " <<canBoundingBox.size.width << ", vyska: " << canBoundingBox.size.height
-         << " rot: " << canBoundingBox.angle << endl;
+//    cout << "Pomer stran: " <<canBoundingBox.size.width/canBoundingBox.size.height
+//         << ", sirka: " <<canBoundingBox.size.width << ", vyska: " << canBoundingBox.size.height
+//         << " rot: " << canBoundingBox.angle
+//         << " x:" << canBoundingBox.center.x << " y:" << canBoundingBox.center.y << endl;
     // display
     imshow(OPENCV_WINDOW, imgThresholded); //show the thresholded image
-    // imshow("Control", drawing);
+
+        circle(imgOriginal,canBoundingBox.center,10,Scalar( 0, 0, 255 ));
+        imshow("original", imgOriginal);
+        // imshow("Control", drawing);
         //imshow("Control", imgOriginal);
         //imshow("Original", imgOriginal); //show the original image
 
@@ -516,7 +524,6 @@ class ImageConverter
     }
 
     void depthImageCb(const sensor_msgs::ImageConstPtr& msg){
-        cout << "depth " <<endl; // << msg.header.stamp.sec<< endl;
         cv_bridge::CvImagePtr cv_ptr;
         try
         {
@@ -532,9 +539,18 @@ class ImageConverter
         Mat depthf; //(height, width, CV_8UC1);
         imgOriginal.convertTo(depthf, CV_8UC1, 255.0/2048.0);
 
-        double canX = canBoundingBox.center.x;
-        double canY = canBoundingBox.center.y;
+        double scaleX = imgOriginal.cols/rgbCols;
+        double scaleY = imgOriginal.rows/rgbRows;
+        double canX = canBoundingBox.center.x * scaleX;
+        double canY = canBoundingBox.center.y * scaleY;
+//        Point p((int)canX, (int)canY);
+        Point p = canBoundingBox.center;
+//        double z = imgOriginal.at<double>(10, 10);
+//        double z = imgOriginal.at((int)canY, (int)canX));
 
+        cout << "depth at x="<< canX << " y=" << canY << ": " << imgOriginal.at<uint16_t>(p) << endl;
+
+        circle(depthf,p,10,255);
         imshow("depth", depthf);
     }
 };
