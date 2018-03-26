@@ -287,6 +287,8 @@ int main(int argc, char **argv)
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
+#include <ros/topic.h>
+#include <boost/shared_ptr.hpp>
 
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -312,6 +314,8 @@ int hough_threshold = 100; // for 640x480, 80 for 320x240
 double aspectRatioLow = 0.35;
 double aspectRatioHigh = 0.55;
 double angleRange = 30.0;
+int maxDistance = 1000; //mm
+int actual_distance = 0;
 
 void hough_transform (Mat &src, Mat &dest)
 {
@@ -374,6 +378,7 @@ class ImageConverter
         nhPriv.getParam("aspect_ratio_low", aspectRatioLow);
         nhPriv.getParam("aspect_ratio_high", aspectRatioHigh);
         nhPriv.getParam("angle_range", angleRange);
+        nhPriv.getParam("max_distance", maxDistance);
 
         cout << "lowH=" << iLowH << " highH=" << iHighH << endl;
 
@@ -406,8 +411,6 @@ class ImageConverter
         //if (cv_ptr->image.rows > 60 && cv_ptr->image.cols > 60)
             //circle(cv_ptr->image, Point(50, 50), 10, CV_RGB(255,0,0));
 
-
-
         /* HOUGH TRANSFORMATION
 
         Mat edges;
@@ -433,6 +436,8 @@ class ImageConverter
         Mat imgHSV;
         rgbCols = imgOriginal.cols; rgbRows = imgOriginal.rows;
 
+        GaussianBlur(imgOriginal,imgOriginal,Size( 5, 5 ), 0, 0);
+
         cvtColor(imgOriginal, imgHSV, COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
 
         Mat imgThresholded;
@@ -452,13 +457,15 @@ class ImageConverter
         // find contours (if always so easy to segment as your image, you could just add the black/rect pixels to a vector)
     vector<vector<Point> > contours;
     vector<Vec4i> hierarchy;
-    cv::findContours(imgThresholded,contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+    cv::findContours(imgThresholded, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
 
     /// Draw contours and find biggest contour (if there are other contours in the image, we assume the biggest one is the desired rect)
     // drawing here is only for demonstration!
     int biggestContourIdx = -1;
     float biggestContourArea = 0;
     // Mat drawing = Mat::zeros( imgThresholded.size(), CV_8UC3 );
+
+
     for( int i = 0; i< contours.size(); i++ )
     {
         Scalar color = Scalar(0, 100, 0);
@@ -469,8 +476,9 @@ class ImageConverter
         float pomerStran = bbox.size.width/bbox.size.height;
 
         if(ctArea > biggestContourArea
-                && (pomerStran > 0.35 && pomerStran < 0.55)
-                && (abs(bbox.angle) < 20))
+                && (pomerStran > aspectRatioLow && pomerStran < aspectRatioHigh)
+                && (abs(bbox.angle) < angleRange)
+                && actual_distance < maxDistance)
 //        if(ctArea > biggestContourArea)
         {
             biggestContourArea = ctArea;
@@ -489,8 +497,6 @@ class ImageConverter
     canBoundingBox = minAreaRect(contours[biggestContourIdx]);
     // one thing to remark: this will compute the OUTER boundary box, so maybe you have to erode/dilate if you want something between the ragged lines
 
-
-
     // draw the rotated rect
     Point2f corners[4];
     canBoundingBox.points(corners);
@@ -501,11 +507,12 @@ class ImageConverter
 
     circle(imgThresholded,canBoundingBox.center,10,Scalar( 0, 0, 255 ));
     canRectCoords = canBoundingBox.center;
-
-//    cout << "Pomer stran: " <<canBoundingBox.size.width/canBoundingBox.size.height
-//         << ", sirka: " <<canBoundingBox.size.width << ", vyska: " << canBoundingBox.size.height
-//         << " rot: " << canBoundingBox.angle
-//         << " x:" << canBoundingBox.center.x << " y:" << canBoundingBox.center.y << endl;
+/*
+    cout << "Pomer stran: " <<canBoundingBox.size.width/canBoundingBox.size.height
+        << ", sirka: " <<canBoundingBox.size.width << ", vyska: " << canBoundingBox.size.height
+        << " rot: " << canBoundingBox.angle
+        << " x:" << canBoundingBox.center.x << " y:" << canBoundingBox.center.y << endl;
+        */
     // display
     imshow(OPENCV_WINDOW, imgThresholded); //show the thresholded image
 
@@ -525,6 +532,9 @@ class ImageConverter
 
     void depthImageCb(const sensor_msgs::ImageConstPtr& msg){
         cv_bridge::CvImagePtr cv_ptr;
+
+        //sensor_msgs::ImageConstPtr ffff = ros::topic::waitForMessage<sensor_msgs::ImageConstPtr>("/kinect2/sd/image_color_rect");
+
         try
         {
             cv_ptr = cv_bridge::toCvCopy(msg, ""); // CV_16UC1//sensor_msgs::image_encodings::BGR8
@@ -547,8 +557,8 @@ class ImageConverter
         Point p = canBoundingBox.center;
 //        double z = imgOriginal.at<double>(10, 10);
 //        double z = imgOriginal.at((int)canY, (int)canX));
-
-        cout << "depth at x="<< canX << " y=" << canY << ": " << imgOriginal.at<uint16_t>(p) << endl;
+        actual_distance = imgOriginal.at<uint16_t>(p);
+        cout << "depth at x="<< canX << " y=" << canY << ": " << actual_distance << endl;
 
         circle(depthf,p,10,255);
         imshow("depth", depthf);

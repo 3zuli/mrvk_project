@@ -12,5 +12,6 @@
         <param name="aspect_ratio_low" type="double" value="0.35"/>
         <param name="aspect_ratio_high" type="double" value="0.55"/>
         <param name="angle_range" type="double" value="30"/>
+        <param name="max_distance" type="int" value="1000"/>
     </node>
 </launch>
