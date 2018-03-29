@@ -298,6 +298,7 @@ using namespace std;
 using namespace cv;
 
 static const char OPENCV_WINDOW[] = "Image window";
+
 int canny_threshold = 200;
 int hough_threshold = 100; // for 640x480, 80 for 320x240
 
@@ -316,6 +317,38 @@ double aspectRatioHigh = 0.55;
 double angleRange = 30.0;
 int maxDistance = 1000; //mm
 int actual_distance = 0;
+
+
+typedef struct v { 
+  float x;  
+  float y;  
+  float z;  
+} vector3d;
+
+float raw_depth_to_meters(int depth_value){ 
+  float depth_value_f = (float) depth_value; 
+  if (depth_value < 2047){ 
+    float depth = 1.0 / (depth_value_f  * -0.0030711016 + 3.3309495161);
+    return depth; 
+  }
+  return 0.0f; 
+} 
+
+vector3d get_handpos_xyz_from_cg(float cgx, float cgy, float cgz){
+  double fx_d = 1.0 / 5.9421434211923247e+02;
+  double fy_d = 1.0 / 5.9104053696870778e+02;
+  double cx_d = 3.3930780975300314e+02;
+  double cy_d = 2.4273913761751615e+02;
+
+  float depth = raw_depth_to_meters(cgz);
+  
+  vector3d hand_pos = {   
+    (float) (cgx - cx_d) * depth * fx_d,
+    (float) (cgy - cy_d) * depth * fy_d,
+    (float) depth };  
+
+return hand_pos; 
+}
 
 void hough_transform (Mat &src, Mat &dest)
 {
@@ -341,7 +374,6 @@ void hough_transform (Mat &src, Mat &dest)
     // imshow("circle",gray);
     dest = gray;
 }
-
 
 class ImageConverter
 {
@@ -559,6 +591,8 @@ class ImageConverter
 //        double z = imgOriginal.at((int)canY, (int)canX));
         actual_distance = imgOriginal.at<uint16_t>(p);
         cout << "depth at x="<< canX << " y=" << canY << ": " << actual_distance << endl;
+       	vector3d realWorldCoords = get_handpos_xyz_from_cg((float)canX, (float)canY, (float)actual_distance);
+		cout << "RealWorldCoord: depth at x="<< realWorldCoords.x << " y=" << realWorldCoords.y << ": " << realWorldCoords.z << endl;
 
         circle(depthf,p,10,255);
         imshow("depth", depthf);
