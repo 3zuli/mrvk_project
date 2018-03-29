@@ -506,11 +506,12 @@ class ImageConverter
         float ctArea= contourArea(contours[i]);
         RotatedRect bbox = minAreaRect(contours[i]);
         float pomerStran = bbox.size.width/bbox.size.height;
+//        cout << pomerStran << endl;
 
         if(ctArea > biggestContourArea
                 && (pomerStran > aspectRatioLow && pomerStran < aspectRatioHigh)
-                && (abs(bbox.angle) < angleRange)
-                && actual_distance < maxDistance)
+                && (abs(bbox.angle) < angleRange))
+                //&& actual_distance < maxDistance)
 //        if(ctArea > biggestContourArea)
         {
             biggestContourArea = ctArea;
@@ -522,6 +523,9 @@ class ImageConverter
     if(biggestContourIdx < 0)
     {
         cout << "no contour found" << endl;
+        imshow("original", imgOriginal);
+        imshow(OPENCV_WINDOW, imgThresholded);
+        waitKey(15);
         return;
     }
 
@@ -539,12 +543,12 @@ class ImageConverter
 
     circle(imgThresholded,canBoundingBox.center,10,Scalar( 0, 0, 255 ));
     canRectCoords = canBoundingBox.center;
-/*
-    cout << "Pomer stran: " <<canBoundingBox.size.width/canBoundingBox.size.height
-        << ", sirka: " <<canBoundingBox.size.width << ", vyska: " << canBoundingBox.size.height
-        << " rot: " << canBoundingBox.angle
-        << " x:" << canBoundingBox.center.x << " y:" << canBoundingBox.center.y << endl;
-        */
+
+    cout << "Pomer stran: " <<canBoundingBox.size.width/canBoundingBox.size.height << endl;
+//        << ", sirka: " <<canBoundingBox.size.width << ", vyska: " << canBoundingBox.size.height
+//        << " rot: " << canBoundingBox.angle
+//        << " x:" << canBoundingBox.center.x << " y:" << canBoundingBox.center.y << endl;
+
     // display
     imshow(OPENCV_WINDOW, imgThresholded); //show the thresholded image
 
