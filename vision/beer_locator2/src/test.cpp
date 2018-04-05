@@ -1,298 +1,18 @@
-#include <ros/ros.h>
-#define PI 3.1414
-
-/*
-bool Buoy::detectBuoy()
-{
-    if(!_image.empty())
-    {
-        Mat org,_finalImg, gray, edges,dst, org1;
-        _finalImg = obj.run(_image,1,0);
-//        imshow("max edge",obj.run(_image,1,0));
-//        cvtColor(_finalImg, _imageHSV, CV_BGR2HSV);
-//        Mat gray,dst;
-        cvtColor(_finalImg,gray,CV_BGR2GRAY);
-        adaptiveThreshold(gray,org,100,ADAPTIVE_THRESH_MEAN_C,THRESH_BINARY,13,0);
-
-//        fastNlMeansDenoising(org,dst,3,7,21 );
-//        fastNlMeansDenoising(org, dst);
-//        imshow("denoised ", dst);
-//        inRange(_imageHSV,_lowerThreshYellow,_upperThreshYellow, org);
-        // inRange(_imageHSV,_lowerThreshGreen,_upperThreshGreen, _imageBWGreen);
-
-         imshow("org", org);
-
-        Mat org2, erodeimg;
-//        medianBlur(org, _imageBW, 3);
-
-        erode(org, erodeimg, _kernelDilateErode);
-        erode(erodeimg, erodeimg, _kernelDilateErode);
-        imshow("erode", erodeimg);
-        dilate(erodeimg, org2, _kernelDilateErode);
-//        dilate(org2, org2, _kernelDilateErode);
-        Canny(org2,edges,0,100);
-//        imshow("eroded image", edges);
-        imshow("dilated ", org2);
-        imshow("canny", edges);
-        waitKey(33);
-        CBlobResult _blobs,_blobsClutter;
-        CBlob * _currentBlob;
-        IplImage _imageBWipl = org2;
-        _blobs = CBlobResult(&_imageBWipl, NULL, 0);
-        _blobs.Filter(_blobs, B_INCLUDE, CBlobGetArea(), B_INSIDE, 200, 5000);
-
-//         _imageBW = Scalar(0, 0, 0);
-        org2 = Scalar(0, 0, 0);
-
-        cout << "number of blobs " << _blobs.GetNumBlobs() << endl;
-
-        for(int i = 0; i < _blobs.GetNumBlobs(); i++)
-        {
-            _currentBlob = _blobs.GetBlob(i);
-            _currentBlob->FillBlob(&_imageBWipl, Scalar(255));
-        }
-
-        Mat newimg;
-//        Mat _imageBW2 = _imageBW.clone();
-        Mat _imageBW2 = org2.clone();
-        dilate(_imageBW2, newimg, _kernelDilateErode);
-        imshow("newimg", newimg);
-        Mat src;
-        vector<Mat> channels;
-        channels.push_back(org2);
-        channels.push_back(org2);
-        channels.push_back(org2);
-        merge( channels, src);
-
-        _contours.clear();
-//        medianBlur(_imageBW2, _imageBW2, 5);
-        imshow("imageBW2", _imageBW2);
-        findContours(_imageBW2, _contours, CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
-
-        Point2f _centerBuff;
-        float _radiusBuff;
-        vector<Point> _contoursPolyBuff;
-        _center.clear();
-        _radius.clear();
-        _contoursPoly.clear();
-
-        _imageBW = Scalar(0, 0, 0);
-
-        for(int i=0; i < _contours.size(); i++)
-        {
-            if(contourArea(_contours[i])>50)
-            {
-                approxPolyDP(_contours[i],_contoursPolyBuff,3,true);
-                minEnclosingCircle((Mat)_contoursPolyBuff,_centerBuff,_radiusBuff);
-                circle(_imageBW,_centerBuff,_radiusBuff,Scalar(255), -1);
-                _center.push_back(_centerBuff);
-                _radius.push_back(_radiusBuff);
-                _contoursPoly.push_back(_contoursPolyBuff);
-            }
-        }
-
-        Mat src_gray;
-        cvtColor( src, src_gray, CV_BGR2GRAY );
-        src = Scalar(0, 0, 0);
-
-        GaussianBlur( src_gray, src_gray, Size(9, 9), 2, 2 );
-        imshow("src_gray", src_gray);
-
-        /// Apply the Hough Transform to find the circles
-        HoughCircles( src_gray, circles, CV_HOUGH_GRADIENT, 1, 80, 180, 25, 30, 300 );
-
-        //       /// Draw the circles detected
-        if(circles.size() == 0){
-            cout<<"NOTHING CIRCULAR" << endl;
-            return false;
-        }
-
-
-
-
-
-        for( size_t i = 0; i < circles.size(); i++ )
-        {
-            cout << "circle wala for loop " << endl;
-            cout << "circle area = " << endl;
-            Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
-            int radius = cvRound(circles[i][2]);
-            _fcenter.push_back(center);
-            _fradius.push_back(cvRound(circles[i][2]));
-            // circle center
-            circle( src, center, 3, Scalar(0, 255, 0), 3, 8, 0 );
-            // circle outline
-            circle( src, center, radius, Scalar(0, 0, 255), 1, 8, 0 );
-        }
-
-        
-        for (int i = 0; i < _fradius.size(); ++i)
-        {
-            if(_fradius[i] > max){
-                index = i;
-                max = _fradius[i];
-            }
-        }
-        cout << "<<<<<<<<<<     largest radius = " << max << "          >>>>>>>>>>>>>>>"<<endl;
-        if(max == 0){
-            cout << "max  = 0" << endl;
-            return false;
-        }
-        else{
-            circle(src,_fcenter[index],3,Scalar(255,255,0),1,8,0);
-            circle(src,_fcenter[index], max,Scalar(0,255,0),1,8,0);
-//            return true;
-        }
-        cout << "show src image" << endl;
-        imshow("src", src);
-
-        _fcenter.clear();
-        _fradius.clear();
-//        if(_center.size() > 0){
-//            cout << "center size > 0 " << endl;
-//            return true;
-//        }
-//        else{
-//            cout << "returns false" << endl;
-//            return false;
-//        }
-
-        return true;
-    }
-    else{
-        cout << "no image loaded.." << endl;
-        return false;
-    }
-
-
-    waitKey(33);
-    return 0;
-}
-*/
-
-
-
-
-
-
-/*
-
-#include "opencv2/opencv.hpp"
-#include "opencv2/core/core.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
-#include <stdlib.h>
-#include <stdio.h>
-
-#include <cv_bridge/cv_bridge.h>
-
-#include "ros/ros.h"
-#include "sensor_msgs/Image.h"
-#include <sensor_msgs/image_encodings.h>
-#include "std_msgs/String.h"
-#include <image_transport/image_transport.h>
-
-using namespace std;
-using namespace cv;
-
-int canny_threshold = 200;
-int hough_threshold = 100; // for 640x480, 80 for 320x240
-static const string OPENCV_WINDOW = "Image window";
-
-*/
-
-/*
-void hough_transform (Mat &src, Mat &dest)
-{
-    // imshow("bgr",src);
-    Mat gray;
-    cvtColor(src,gray,CV_BGR2GRAY);
-    GaussianBlur(gray,gray,Size(5,5),2,2);
-    vector<Vec3f> circles;
-*/
-
-   // HoughCircles(gray,circles,CV_HOUGH_GRADIENT,2,gray.rows/8,canny_threshold/*200*/,hough_threshold/*80 for 320x240, 100 for 640x480*/);
-    /*
-    Canny(gray, gray, MAX(canny_threshold/2,1), canny_threshold, 3);
-    cvtColor(gray,gray,CV_GRAY2BGR);
-    if (circles.size()==0) cout << "circle not found" << endl;
-    else for (size_t i=0; i<circles.size(); i++) {
-        Point center(cvRound(circles[i][0]),cvRound(circles[i][1]));
-        int radius = cvRound(circles[i][2]);
-        circle(gray,center,3,Scalar(0,0,255),-1,8,0);
-        circle(gray,center,radius,Scalar(0,0,255),3,8,0);
-        // if (i==0) {
-        //     cout << "x = " << center.x << " , radius = " << radius << endl;
-        // }
-    }
-    // imshow("circle",gray);
-    dest = gray;
-}
-
-void videoCaptureCallback(const sensor_msgs::Image::ConstPtr& msg)
-{
-    
-    //VideoCapture cap; // open the default camera
-    
-    if(!cap.isOpened()) { // check if we succeeded
-        cout << "Cap not opened";
-        //return -1;
-    }
-
-    Mat edges;
-    namedWindow("src",1);
-    namedWindow("edges",1);
-    createTrackbar("canny threshold", "edges", &canny_threshold, 255);
-    createTrackbar("hough threshold", "edges", &hough_threshold, 255);
-
-  //  for(;;)
-  //  {
-        Mat frame, hough;
-        cap >> frame; // get a new frame from camera
-
-        imshow("src", frame);
-        cvtColor(frame, edges, CV_BGR2GRAY);
-        hough_transform(frame, hough);
-         
-        imshow("edges", edges);
-        imshow("edges", hough);
-        //if(waitKey(30) >= 0) break;
-
-    //}
-    // the camera will be deinitialized automatically in VideoCapture destructor
-//}
-
-
-
-int main(int argc, char **argv)
-{
-    cout << "OpenCV version : " << CV_VERSION << endl;
-
-    ros::init(argc, argv, "video");
-    ros::NodeHandle n;
-    ros::Subscriber sub = n.subscribe("/kinect2/qhd/image_color_rect", 30, videoCaptureCallback);
-    //ros::Subscriber sub = n.subscribe("image_color_rect", 30, videoCaptureCallback);
-    ros::spin();
-    return 0;
-}
-*/
-
-
-
-
-
-
-
-#include <ros/ros.h>
-#include <image_transport/image_transport.h>
-#include <cv_bridge/cv_bridge.h>
-#include <sensor_msgs/image_encodings.h>
-#include <ros/topic.h>
+#include <iostream>
 #include <boost/shared_ptr.hpp>
 
+#include <ros/ros.h>
+#include <ros/topic.h>
+#include <tf/transform_broadcaster.h>
+
+#include <sensor_msgs/image_encodings.h>
+#include <image_transport/image_transport.h>
+
+#include <cv_bridge/cv_bridge.h>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include <iostream>
+
+#define PI 3.1414
 
 using namespace std;
 using namespace cv;
@@ -303,14 +23,14 @@ int canny_threshold = 200;
 int hough_threshold = 100; // for 640x480, 80 for 320x240
 
 
-        int iLowH = 19;
-        int iHighH = 36;
+int iLowH = 19;
+int iHighH = 36;
 
-        int iLowS = 65;
-        int iHighS = 255;
+int iLowS = 65;
+int iHighS = 255;
 
-        int iLowV = 50;
-        int iHighV = 255;
+int iLowV = 50;
+int iHighV = 255;
 
 double aspectRatioLow = 0.35;
 double aspectRatioHigh = 0.55;
@@ -332,13 +52,53 @@ float raw_depth_to_meters(int depth_value){
     return depth; 
   }
   return 0.0f; 
-} 
+}
+
+// camera parameters from calib_color.yaml work best
+
+// The distortion parameters, size depending on the distortion model.
+// For "plumb_bob", the 5 parameters are: (k1, k2, t1, t2, k3).
+double D[5] = {4.0219266086577554e-02, -2.9570656767220004e-02,
+               -7.8242412537459817e-03, -7.3536564793294447e-04,
+               -1.2788625412249429e-02};
+
+// Intrinsic camera matrix for the raw (distorted) images.
+//     [fx  0 cx]
+// K = [ 0 fy cy]
+//     [ 0  0  1]
+double K[3][3] = {{1.0574977065750454e+03, 0.0, 9.4268043750386073e+02},
+                  {0.0, 1.0608631949889773e+03, 5.0978490432533260e+02},
+                  {0.0, 0.0, 1.0}};
+
+// Rectification matrix (stereo cameras only)
+// A rotation matrix aligning the camera coordinate system to the ideal
+// stereo image plane so that epipolar lines in both stereo images are
+// parallel.
+// float64[9]  R # 3x3 row-major matrix
+double R[9] = {1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
+
+// Projection/camera matrix
+//     [fx'  0  cx' Tx]
+// P = [ 0  fy' cy' Ty]
+//     [ 0   0   1   0]
+
+double P[3][4] = {{1.0574977065750454e+03, 0.0, 9.4268043750386073e+02,  0.0},
+                  {0.0, 1.0608631949889773e+03, 5.0978490432533260e+02, 0.0},
+                  {0.0, 0.0, 1.0, 0.0}};
+
+// http://pille.iwr.uni-heidelberg.de/~kinect01/doc/classdescription.html#kinectcloud-section
+// http://pille.iwr.uni-heidelberg.de/~kinect01/doc/reconstruction.html
+//
 
 vector3d get_handpos_xyz_from_cg(float cgx, float cgy, float cgz){
-  double fx_d = 1.0 / 5.9421434211923247e+02;
-  double fy_d = 1.0 / 5.9104053696870778e+02;
-  double cx_d = 3.3930780975300314e+02;
-  double cy_d = 2.4273913761751615e+02;
+  double fx_d = 1.0 / P[0][0]; //5.9421434211923247e+02;
+  double fy_d = 1.0 / P[1][1]; //5.9104053696870778e+02;
+  double cx_d = P[0][2]; //3.3930780975300314e+02;
+  double cy_d = P[1][2]; //2.4273913761751615e+02;
+//    double fx_d = 1.0 / 5.9421434211923247e+02;
+//    double fy_d = 1.0 / 5.9104053696870778e+02;
+//    double cx_d = 3.3930780975300314e+02;
+//    double cy_d = 2.4273913761751615e+02;
 
   float depth = raw_depth_to_meters(cgz);
   
@@ -380,6 +140,8 @@ class ImageConverter
     ros::NodeHandle nh_;
     ros::NodeHandle nhPriv;
 
+    tf::TransformBroadcaster br;
+
     image_transport::ImageTransport it_;
     
     ros::Subscriber cameraInfoSub_;
@@ -387,6 +149,8 @@ class ImageConverter
     image_transport::Subscriber depth_sub_;
     image_transport::Publisher image_pub_;
 
+
+    bool foundCan;
     RotatedRect canBoundingBox;
     Point2f canRectCoords;
 
@@ -411,6 +175,8 @@ class ImageConverter
         nhPriv.getParam("aspect_ratio_high", aspectRatioHigh);
         nhPriv.getParam("angle_range", angleRange);
         nhPriv.getParam("max_distance", maxDistance);
+
+        foundCan = false;
 
         cout << "lowH=" << iLowH << " highH=" << iHighH << endl;
 
@@ -520,13 +286,16 @@ class ImageConverter
     }
 
     // if no contour found
-    if(biggestContourIdx < 0)
-    {
+    if(biggestContourIdx < 0) {
         cout << "no contour found" << endl;
         imshow("original", imgOriginal);
         imshow(OPENCV_WINDOW, imgThresholded);
         waitKey(15);
+        foundCan = false;
         return;
+    }
+    else {
+        foundCan = true;
     }
 
     // compute the rotated bounding rect of the biggest contour! (this is the part that does what you want/need)
@@ -581,24 +350,42 @@ class ImageConverter
             return;
         }
 
+
         Mat imgOriginal = cv_ptr->image;
         Mat depthf; //(height, width, CV_8UC1);
         imgOriginal.convertTo(depthf, CV_8UC1, 255.0/2048.0);
 
-        double scaleX = imgOriginal.cols/rgbCols;
-        double scaleY = imgOriginal.rows/rgbRows;
-        double canX = canBoundingBox.center.x * scaleX;
-        double canY = canBoundingBox.center.y * scaleY;
+        if(foundCan) {
+            double scaleX = imgOriginal.cols / rgbCols;
+            double scaleY = imgOriginal.rows / rgbRows;
+            double canX = canBoundingBox.center.x * scaleX;
+            double canY = canBoundingBox.center.y * scaleY;
 //        Point p((int)canX, (int)canY);
-        Point p = canBoundingBox.center;
+            Point p = canBoundingBox.center;
 //        double z = imgOriginal.at<double>(10, 10);
 //        double z = imgOriginal.at((int)canY, (int)canX));
-        actual_distance = imgOriginal.at<uint16_t>(p);
-        cout << "depth at x="<< canX << " y=" << canY << ": " << actual_distance << endl;
-       	vector3d realWorldCoords = get_handpos_xyz_from_cg((float)canX, (float)canY, (float)actual_distance);
-		cout << "RealWorldCoord: depth at x="<< realWorldCoords.x << " y=" << realWorldCoords.y << ": " << realWorldCoords.z << endl;
+            double avg = 0;
+            int num = 0;
+            for (int x = -1; x <= 1; x++) {
+                for (int y = -1; y <= 1; y++) {
+                    avg += imgOriginal.at<uint16_t>(p + Point(x, y));
+                    num++;
+                }
+            }
+            actual_distance = avg / num; //imgOriginal.at<uint16_t>(p);
+            cout << "depth at x=" << canX << " y=" << canY << ": " << actual_distance << endl;
+            vector3d realWorldCoords = get_handpos_xyz_from_cg((float) canX, (float) canY, (float) actual_distance);
+            cout << "RealWorldCoord: depth at x=" << realWorldCoords.x << " y=" << realWorldCoords.y << ": "
+                 << realWorldCoords.z << endl;
 
-        circle(depthf,p,10,255);
+            circle(depthf, p, 10, 255);
+
+            tf::Transform can_transform;
+            can_transform.setOrigin(tf::Vector3(realWorldCoords.x, realWorldCoords.y, realWorldCoords.z));
+            can_transform.setRotation(tf::Quaternion(1, 0, 0, 0));
+            br.sendTransform(tf::StampedTransform(can_transform, ros::Time::now(), "kinect2_link", "can_frame"));
+        }
+
         imshow("depth", depthf);
     }
 };

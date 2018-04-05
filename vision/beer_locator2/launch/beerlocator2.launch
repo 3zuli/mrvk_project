@@ -1,6 +1,15 @@
 <?xml version="1.0"?>
 
 <launch>
+    <arg name="kinect_bridge" default="true"/>
+
+    <include file="$(find kinect2_bridge)/launch/kinect2_bridge.launch" if="$(arg kinect_bridge)">
+        <arg name="fps_limit" value="5"/>
+        <arg name="bilateral_filter" value="true"/>
+        <arg name="edge_aware_filter" value="true"/>
+        <arg name="publish_tf" value="true"/>
+    </include>
+
     <node name="beer_locator2_node" pkg="beer_locator2" type="opencv-test" output="screen">
         <param name="lowH"  type="int" value="19"/>
         <param name="highH" type="int" value="36"/>
