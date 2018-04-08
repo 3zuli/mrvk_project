@@ -466,23 +466,36 @@ uint8_t* common_functions::ArmCreateD5(uint8_t *message,int joint) {
   {
     case 1:
     {
-      fprintf(stdout, "otvaram celust\n");
+//      fprintf(stdout, "otvaram celust\n");
       //request.data=arm_set.SetGripVelocity;
       //request.data=0x20 | request.data;
-      requestD5.data=0xC1;
+//      requestD5.data=0xC1;
+
+      requestD5.command=0xD5;
+      // otvaranie celuste
+      requestD5.data=0x63; //7f;
       break;
     }
     case 2:
     {
-      requestD5.data=0xC0;
-      fprintf(stdout, "zatvaram celust\n");
+//      requestD5.data=0xC0;
+
+      requestD5.command=0xD5;
+      // zatvaranie celuste
+      requestD5.data = 0x07; //1f;
+//      fprintf(stdout, "zatvaram celust\n");
       break;
     }
     case 3:
     {
-      fprintf(stdout, "Stop celust\n");
+//      fprintf(stdout, "Stop celust\n");
       requestD5.command=0xD5;
-      requestD5.data=0x7f;
+      requestD5.data=0xC0;
+
+      // otvaranie celuste
+//      requestD5.data=0x7f;
+      // zatvaranie celuste
+//      requestD5.data = 0x3f;
       break;
     }
   }

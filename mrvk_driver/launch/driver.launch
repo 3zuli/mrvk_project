@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-	<arg name="off_map_tf" default="false" />
+	<arg name="off_map_tf" default="true" />
 	<arg name="off_odom_tf" default="false" />
     <arg name="use_joint_states_publisher" default="true"/>
 

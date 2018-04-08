@@ -106,13 +106,13 @@ bool serial_comm(uint8_t *wBuffer, uint8_t *response) {
     if (wBuffer[2] == 0xD1) {
         for (int i = 0; i < message_length; i++) {
 
-            ROS_INFO("d1 %X", rBuffer[i]);
+//            ROS_INFO("d1 %X", rBuffer[i]);
         }
     }
     if (wBuffer[2] == 0xD5) {
         for (int i = 0; i < message_length; i++) {
 
-            ROS_INFO("d5 %X", rBuffer[i]);
+//            ROS_INFO("d5 %X", rBuffer[i]);
         }
     }
     if ((my_serial->available() == 0) && (wBuffer[0] == rBuffer[0]) && (rBuffer[1] == (message_length))) {
@@ -152,7 +152,7 @@ void joint_speed_callback(const kv01_driver::joint_speed::ConstPtr &speed) {
     if (speed->command == comm_gripper_control) {
         message = kv01_fun->ArmCreateD5(message, speed->joint);
         for (int i = 0; i < 6; i++) {
-            ROS_INFO("%x", message[i]);
+//            ROS_INFO("%x", message[i]);
         }
         pthread_mutex_lock(&comm_lock_mutex);
         if (!serial_comm(message, rBuffer)) {
@@ -629,7 +629,17 @@ int main(int argc, char **argv) {
     pthread_attr_t control_param, wifi_param, joint_states_param;
     ros::MultiThreadedSpinner spinner(4);
 
-    reset_voltage = n.serviceClient<std_srvs::SetBool>("/mrvk/set_arm_voltage");
+//    ROS_INFO("Switching arm voltage OFF");
+//    ros::param::set("/mrvk_driver/arm_12V", false);
+//    ros::param::set("/mrvk_driver/arm_5V", false);
+//    ros::Duration(2.0).sleep();
+//    ROS_INFO("Switching arm voltage ON");
+//    ros::param::set("/mrvk_driver/arm_12V", true);
+//    ros::param::set("/mrvk_driver/arm_5V", true);
+
+    reset_voltage = n.serviceClient<std_srvs::Trigger>("/set_arm_voltage");
+
+//    reset_voltage.call()
 
     my_serial = new serial::Serial(port, baud, serial::Timeout::simpleTimeout(2));
     sleep(2);
