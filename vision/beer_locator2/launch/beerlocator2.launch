@@ -13,14 +13,14 @@
     <node name="beer_locator2_node" pkg="beer_locator2" type="opencv-test" output="screen">
         <param name="lowH"  type="int" value="19"/>
         <param name="highH" type="int" value="36"/>
-        <param name="lowS"  type="int" value="65"/>
+        <param name="lowS"  type="int" value="100"/>
         <param name="highS" type="int" value="255"/>
         <param name="lowV"  type="int" value="50"/>
         <param name="highV" type="int" value="255"/>
 
-        <param name="aspect_ratio_low" type="double" value="0.25"/>
+        <param name="aspect_ratio_low" type="double" value="0.20"/>
         <param name="aspect_ratio_high" type="double" value="0.55"/>
-        <param name="angle_range" type="double" value="30"/>
-        <param name="max_distance" type="int" value="1000"/>
+        <param name="angle_range" type="double" value="45"/>
+        <param name="max_distance" type="int" value="2000"/>
     </node>
 </launch>
