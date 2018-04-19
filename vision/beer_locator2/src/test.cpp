@@ -381,8 +381,9 @@ class ImageConverter
             circle(depthf, p, 10, 255);
 
             tf::Transform can_transform;
-            can_transform.setOrigin(tf::Vector3(realWorldCoords.x, realWorldCoords.y, realWorldCoords.z));
-            can_transform.setRotation(tf::Quaternion(1, 0, 0, 0));
+            can_transform.setOrigin(tf::Vector3(realWorldCoords.x, realWorldCoords.z, realWorldCoords.y));
+//            can_transform.setOrigin(tf::Vector3(realWorldCoords.x, realWorldCoords.y, realWorldCoords.z));
+            can_transform.setRotation(tf::Quaternion(0, 0, 0, 1));
             br.sendTransform(tf::StampedTransform(can_transform, ros::Time::now(), "kinect2_link", "can_frame"));
         }
 
